@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-[#0d0d0d] text-[#e5e5e5] select-none">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Postcard Studio — Generator Kartu Pos Vintage</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Caveat:wght@400..700&family=Cinzel:wght@400;600;700&family=Dancing+Script:wght@400..700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f2ec;
+      --ink: #29251f;
+      --muted: #827a70;
+      --accent: #bd684e;
+      --accent-dark: #9e503a;
+      --line: #e9e3da;
+    }
+
+    .font-bodoni { font-family: 'Bodoni Moda', serif; }
+    .font-playfair { font-family: 'Playfair Display', serif; }
+    .font-cinzel { font-family: 'Cinzel', serif; }
+    .font-caveat { font-family: 'Caveat', cursive; }
+    .font-sans-ui { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    body.app-body {
+      min-height: 100vh;
+      height: auto;
+      justify-content: flex-start;
+      padding: 0 20px 32px;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 50% -18%, rgba(255,255,255,.95), transparent 58%),
+        var(--paper);
+    }
+
+    .brand-header {
+      width: min(100%, 1020px);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin: 0 auto;
+      padding: 22px 4px 17px;
+      border-bottom: 1px solid rgba(112, 99, 82, .12);
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      color: #fffaf4;
+      background: var(--accent);
+      box-shadow: 0 5px 14px rgba(157, 80, 58, .2);
+    }
+    .brand-kicker, .brand-name { display: block; margin: 0; }
+    .brand-kicker {
+      color: #554c42;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .brand-name { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .brand-badge {
+      margin-left: auto;
+      padding: 7px 10px;
+      border: 1px solid #e8dfd3;
+      border-radius: 999px;
+      color: #776d60;
+      background: rgba(255,255,255,.55);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .step-progress {
+      width: min(100%, 460px);
+      margin: 20px auto 22px;
+    }
+    .step-progress ol {
+      display: flex;
+      align-items: flex-start;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .progress-step {
+      position: relative;
+      z-index: 0;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      color: #a39a8e;
+      font-size: 10px;
+      font-weight: 600;
+      transition: color .2s ease;
+    }
+    .progress-step:not(:last-child)::after {
+      position: absolute;
+      z-index: -1;
+      top: 16px;
+      left: calc(50% + 17px);
+      width: calc(100% - 34px);
+      height: 1px;
+      content: "";
+      background: #e1d9ce;
+      transition: background .2s ease;
+    }
+    .progress-number {
+      width: 33px;
+      height: 33px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #e1d9ce;
+      border-radius: 50%;
+      color: #8d8479;
+      background: var(--paper);
+      font-size: 10px;
+      transition: all .2s ease;
+    }
+    .progress-step.is-active { color: var(--ink); }
+    .progress-step.is-active .progress-number,
+    .progress-step.is-complete .progress-number {
+      border-color: var(--accent);
+      color: white;
+      background: var(--accent);
+      box-shadow: 0 4px 10px rgba(157, 80, 58, .18);
+    }
+    .progress-step.is-complete:not(:last-child)::after { background: var(--accent); }
+
+    .step-panel {
+      width: min(100%, 520px);
+      min-height: 570px;
+      flex: 1 0 auto;
+      gap: 22px;
+      justify-content: space-between;
+      margin: 0 auto 24px;
+      padding: 28px;
+      border: 1px solid rgba(112, 99, 82, .1);
+      border-radius: 26px;
+      background: rgba(255, 255, 255, .86);
+      box-shadow: 0 18px 55px rgba(62, 49, 34, .08), 0 2px 8px rgba(62, 49, 34, .03);
+      color: var(--ink);
+    }
+    .step-heading { padding-top: 0 !important; }
+    .step-heading h1, .step-heading h2 {
+      color: var(--ink) !important;
+      font-size: clamp(22px, 5vw, 27px) !important;
+      font-weight: 600 !important;
+      line-height: 1.2;
+      letter-spacing: -.045em !important;
+    }
+    .step-heading p {
+      margin-top: 7px;
+      color: var(--muted) !important;
+      font-size: 12px !important;
+      line-height: 1.6;
+    }
+    .cover-preview {
+      border: 5px solid white;
+      border-radius: 17px;
+      box-shadow: 0 15px 32px rgba(52, 40, 26, .18);
+    }
+    .step-panel .cover-preview,
+    #interactiveCardContainer { width: 100%; }
+    #card3DFlipper, #editableFrontCard, #editableBackCard {
+      border-radius: 15px;
+    }
+    #storyViewport916 {
+      max-height: min(66svh, 620px);
+      border: 5px solid white;
+      border-radius: 24px;
+      box-shadow: 0 16px 38px rgba(52, 40, 26, .2);
+    }
+    .helper-copy {
+      color: var(--muted) !important;
+      font-size: 11px !important;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .camera-action {
+      width: 58px !important;
+      height: 58px !important;
+      border: 5px solid #f4e9e2 !important;
+      color: white !important;
+      background: var(--accent) !important;
+      box-shadow: 0 8px 18px rgba(157, 80, 58, .23) !important;
+    }
+    .camera-action svg { color: white !important; }
+    .primary-action {
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px !important;
+      color: white !important;
+      background: var(--accent) !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      text-decoration: none !important;
+      box-shadow: 0 7px 16px rgba(157, 80, 58, .16) !important;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .primary-action:hover { background: var(--accent-dark) !important; }
+    .primary-action:active { transform: scale(.98); }
+    .secondary-action {
+      min-height: 44px;
+      border: 1px solid var(--line) !important;
+      border-radius: 13px !important;
+      color: #665d53 !important;
+      background: #fff !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+    }
+    .step-hint {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #faf8f4;
+    }
+    .text-editor {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fcfbf9;
+    }
+    .text-editor-heading {
+      grid-column: 1 / -1;
+      margin: 0;
+      color: #453e35;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .text-editor-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .text-editor-field.is-wide { grid-column: 1 / -1; }
+    .text-editor-field label {
+      color: #71685e;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .text-editor-field input,
+    .text-editor-field textarea {
+      width: 100%;
+      min-height: 40px;
+      padding: 10px 11px;
+      border: 1px solid #e6dfd5;
+      border-radius: 10px;
+      outline: none;
+      color: #332d25;
+      background: #fff;
+      font: inherit;
+      font-size: 12px;
+      user-select: text;
+      -webkit-user-select: text;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .text-editor-field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+    .text-editor-field input:focus,
+    .text-editor-field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(189, 104, 78, .12);
+    }
+    .toolbar-action {
+      border-color: var(--line) !important;
+      border-radius: 14px !important;
+      color: #62594f !important;
+      background: #fff !important;
+    }
+    .modal-backdrop { background: rgba(36, 31, 26, .55) !important; }
+    .modal-card {
+      border: 1px solid rgba(255,255,255,.7) !important;
+      border-radius: 22px !important;
+      background: #fffdfa !important;
+      box-shadow: 0 24px 70px rgba(27, 21, 15, .24) !important;
+    }
+    .modal-card h3, .modal-card > div > span { color: var(--ink) !important; }
+    .modal-card .modal-secondary {
+      border-color: var(--line) !important;
+      color: #62594f !important;
+      background: #f7f4ef !important;
+    }
+    button, label[title] { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, label:focus-within {
+      outline: 3px solid rgba(189, 104, 78, .35);
+      outline-offset: 3px;
+    }
+    @media (max-width: 480px) {
+      body.app-body { padding: 0 14px 22px; }
+      .brand-header { padding-top: 17px; }
+      .brand-badge { font-size: 8px; }
+      .step-progress { margin: 16px auto 18px; }
+      .step-panel { min-height: 540px; padding: 23px 20px; border-radius: 22px; }
+      #step3View { min-height: 690px; }
+      #storyViewport916 { max-height: min(61svh, 560px); }
+      .text-editor { gap: 10px; padding: 13px; }
+      .text-editor-field input, .text-editor-field textarea { font-size: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+
+    /* 3D Flip Card Effect */
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    #card3DFlipper > #editableBackCard { pointer-events: none; }
+    #card3DFlipper.card-flipped > #editableFrontCard { pointer-events: none; }
+    #card3DFlipper.card-flipped > #editableBackCard { pointer-events: auto; }
+
+    /* Standard Kraft Vintage Paper Texture (Opacity 60%) */
+    .kraft-vintage-texture {
+      background: radial-gradient(circle at 50% 50%, rgba(214, 185, 150, 0.25) 0%, rgba(140, 100, 60, 0.4) 100%);
+      opacity: 0.6;
+    }
+
+    /* Stamp Border */
+    .stamp-border {
+      background-color: #f7f2e8;
+      border: 2px dashed #a8947d;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    /* Inline Editable Highlight */
+    [contenteditable="true"] {
+      transition: all 0.2s ease;
+      cursor: text;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    [contenteditable="true"]:hover {
+      outline: 1px dashed rgba(255, 255, 255, 0.5);
+    }
+    .back-editable[contenteditable="true"]:hover {
+      outline: 1px dashed rgba(0, 0, 0, 0.3);
+    }
+    [contenteditable="true"]:focus {
+      outline: 1.5px solid #d47355;
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    .back-editable[contenteditable="true"]:focus {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Hide Scrollbars */
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="app-body font-sans-ui flex flex-col items-center overflow-x-hidden">
+
+  <!-- TOP WATERMARK BRANDING -->
+  <header class="brand-header z-20">
+    <div class="brand-mark" aria-hidden="true"><i data-lucide="send" class="w-4 h-4"></i></div>
+    <div>
+      <span class="brand-kicker">Postcard Studio</span>
+      <p class="brand-name">by OSIS MK56 Jakarta</p>
+    </div>
+    <span class="brand-badge">MEMORY MAKER</span>
+  </header>
+
+  <nav class="step-progress" aria-label="Tahapan membuat postcard">
+    <ol>
+      <li class="progress-step is-active" data-step-indicator="1" aria-current="step">
+        <span class="progress-number">01</span><span>Sampul</span>
+      </li>
+      <li class="progress-step" data-step-indicator="2">
+        <span class="progress-number">02</span><span>Pesan</span>
+      </li>
+      <li class="progress-step" data-step-indicator="3">
+        <span class="progress-number">03</span><span>Simpan</span>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- ==================== STEP 1: SAMPUL / HERO VIEW ==================== -->
+  <section id="step1View" class="step-panel flex flex-col items-center px-4 pb-8 z-10 transition-all duration-300">
+    <!-- Title Header -->
+    <div class="step-heading text-center pt-2">
+      <h1 class="font-sans-ui font-semibold text-2xl text-white tracking-tight">Sampul</h1>
+      <p>Awali dengan foto yang punya cerita.</p>
+    </div>
+
+    <!-- Main Card Preview Center -->
+    <div class="cover-preview w-full aspect-[16/10] bg-zinc-900 shadow-2xl relative overflow-hidden group">
+      <img id="step1PhotoImg" src="https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1000&q=80" 
+           alt="Cover Photo" class="w-full h-full object-cover" crossorigin="anonymous">
+      <div class="absolute inset-0 bg-black/20"></div>
+      
+      <!-- Overlay Kraft Texture -->
+      <div class="absolute inset-0 kraft-vintage-texture pointer-events-none"></div>
+
+      <!-- Live Title Preview -->
+      <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center z-10">
+        <h3 id="step1TitlePreview" class="font-bodoni text-2xl font-bold uppercase text-white tracking-widest drop-shadow-md">
+          SAN FRANCISCO
+        </h3>
+        <p id="step1SubtitlePreview" class="font-playfair italic text-[11px] text-white/90 tracking-wider mt-0.5">
+          DECEMBER 20TH, 2024
+        </p>
+      </div>
+    </div>
+
+    <!-- Bottom Prompt & Camera Button -->
+    <div class="flex flex-col items-center space-y-4 w-full pt-4">
+      <p class="helper-copy text-xs text-zinc-400 font-normal">Pilih foto terbaikmu untuk jadi sampul postcard.</p>
+      
+      <!-- Big Circular Camera Button -->
+      <button onclick="promptPhotoChoice()" aria-label="Pilih atau ambil foto sampul" class="camera-action w-16 h-16 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition border-4 border-zinc-800">
+        <i data-lucide="camera" class="w-7 h-7 text-black"></i>
+      </button>
+
+      <button onclick="goToStep(2)" class="primary-action w-full flex items-center justify-center gap-2 px-4">
+        Lanjut menulis pesan <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </section>
+
+
+  <!-- ==================== STEP 2: EDITING & FLIP VIEW ==================== -->
+  <section id="step2View" class="step-panel hidden flex-col items-center px-4 pb-8 z-10 transition-all duration-300">
+    <!-- Title Header -->
+    <div class="step-heading text-center pt-2 space-y-0.5">
+      <h2 class="font-sans-ui text-sm font-medium text-zinc-200">Tulis pesanmu</h2>
+      <p class="font-sans-ui text-xs text-zinc-400">Ubah semua tulisan lewat kolom di bawah—hasilnya langsung terlihat.</p>
+    </div>
+
+    <!-- Interactive 3D Card (Swipeable / Drag to Flip) -->
+    <div id="interactiveCardContainer" class="w-full aspect-[16/10] perspective-1000 cursor-grab active:cursor-grabbing select-none">
+      <div id="card3DFlipper" class="relative w-full h-full transform-style-3d shadow-2xl">
+        
+        <!-- FRONT SIDE -->
+        <div id="editableFrontCard" class="absolute inset-0 w-full h-full backface-hidden bg-zinc-900 overflow-hidden shadow-2xl">
+          <img id="cardPhotoImg" src="https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1000&q=80" 
+               alt="Cover Photo" class="w-full h-full object-cover pointer-events-none" crossorigin="anonymous">
+          
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none"></div>
+          <div class="absolute inset-0 kraft-vintage-texture pointer-events-none"></div>
+
+          <!-- Inline Editable Title -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center z-10">
+            <h1 id="frontTitleText" contenteditable="true" spellcheck="false" 
+                class="font-bodoni text-2xl sm:text-3xl font-bold uppercase text-white tracking-widest drop-shadow-lg px-2 py-0.5">
+              SAN FRANCISCO
+            </h1>
+            <p id="frontSubtitleText" contenteditable="true" spellcheck="false" 
+               class="font-playfair italic text-[11px] text-white/90 tracking-wider mt-1 drop-shadow">
+              DECEMBER 20TH, 2024
+            </p>
+          </div>
+
+          <!-- Vintage Ticket Stub -->
+          <div class="absolute -top-1 right-3 z-20 flex flex-col items-center pointer-events-none">
+            <svg class="w-4 h-8 text-slate-300 drop-shadow-md z-30" viewBox="0 0 24 48" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M8 12 V34 A6 6 0 0 0 20 34 V10 A8 8 0 0 0 4 10 V36 A10 10 0 0 0 24 36"></path>
+            </svg>
+            <div class="bg-[#f0e6d6] text-[#332b25] p-1 -mt-4 rounded-sm shadow-xl border border-[#c4b5a0] w-14 text-[5px] font-mono leading-tight rotate-[4deg]">
+              <div class="border-b border-[#332b25]/20 pb-0.5 text-center font-bold">PASS</div>
+              <div class="flex justify-between my-0.5 text-[4px]">
+                <span>0082</span>
+                <span>15¢</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BACK SIDE -->
+        <div id="editableBackCard" class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-[#f7f2e8] text-[#2c241e] p-3.5 flex flex-col justify-between overflow-hidden shadow-2xl">
+          <div class="absolute inset-0 kraft-vintage-texture pointer-events-none"></div>
+
+          <!-- Header -->
+          <div class="text-center border-b border-[#2c241e]/20 pb-1 relative z-10 pointer-events-none">
+            <h2 class="font-cinzel text-[10px] font-bold tracking-widest text-[#3a3028]">POSTCARD</h2>
+          </div>
+
+          <!-- Main Grid -->
+          <div class="grid grid-cols-12 gap-2 flex-1 items-stretch py-1 relative z-10">
+            <!-- Left Correspondence -->
+            <div class="col-span-6 flex flex-col justify-start pr-1 border-r border-dashed border-[#2c241e]/25">
+              <span class="text-[6px] font-serif text-[#7a6b5d] uppercase tracking-wider block mb-0.5">Correspondence:</span>
+              <p id="backMsgText" contenteditable="true" spellcheck="false" 
+                 class="font-caveat text-blue-900 text-xs sm:text-sm leading-tight break-words back-editable px-0.5">
+                I left my heart in San Francisco... Sending you lots of love from California!
+              </p>
+            </div>
+
+            <!-- Right Address & Stamp -->
+            <div class="col-span-6 flex flex-col justify-between pl-1">
+              <div>
+                <span class="text-[6px] font-serif text-[#7a6b5d] uppercase tracking-wider block mb-0.5">To:</span>
+                <div id="backToText" contenteditable="true" spellcheck="false" 
+                     class="font-caveat text-blue-900 text-xs back-editable leading-tight px-0.5 border-b border-dotted border-[#2c241e]/30 pb-0.5">
+                  My Dearest Friend
+                </div>
+                <div id="backAddrText" contenteditable="true" spellcheck="false" 
+                     class="font-caveat text-blue-900 text-xs back-editable leading-tight px-0.5 border-b border-dotted border-[#2c241e]/30 pt-0.5 pb-0.5">
+                  Jakarta, Indonesia
+                </div>
+              </div>
+
+              <!-- Stamp -->
+              <div class="relative self-end mt-0.5 pointer-events-none">
+                <div class="absolute -left-6 -top-1.5 w-8 h-8 border border-dashed border-[#1e3a8a]/70 rounded-full flex flex-col items-center justify-center rotate-[-12deg] z-20">
+                  <span class="text-[3.5px] font-mono font-bold text-[#1e3a8a]">AIR MAIL</span>
+                  <span class="text-[3px] font-mono text-[#1e3a8a]">1991</span>
+                </div>
+                <div class="stamp-border w-9 h-11 bg-[#ebd9c4] p-0.5 flex flex-col items-center justify-between text-center">
+                  <img id="stampMiniPhoto" src="https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=100&q=60" class="w-full h-5 object-cover" crossorigin="anonymous">
+                  <div class="flex justify-between w-full px-0.5 text-[3.5px] font-mono font-bold text-[#5a4b3d]">
+                    <span>32</span>
+                    <span>USA</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[5px] font-mono text-[#8a7a6c] tracking-widest text-right relative z-10 pointer-events-none">
+            OFFICIAL TRAVEL MEMORY
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="text-editor" aria-label="Editor tulisan postcard">
+      <h3 class="text-editor-heading">Edit tulisan postcard</h3>
+      <div class="text-editor-field">
+        <label for="editFrontTitle">Judul sampul</label>
+        <input id="editFrontTitle" type="text" value="SAN FRANCISCO" autocomplete="off">
+      </div>
+      <div class="text-editor-field">
+        <label for="editFrontSubtitle">Tanggal</label>
+        <input id="editFrontSubtitle" type="text" value="DECEMBER 20TH, 2024" autocomplete="off">
+      </div>
+      <div class="text-editor-field is-wide">
+        <label for="editBackMessage">Pesan</label>
+        <textarea id="editBackMessage">I left my heart in San Francisco... Sending you lots of love from California!</textarea>
+      </div>
+      <div class="text-editor-field">
+        <label for="editRecipient">Nama penerima</label>
+        <input id="editRecipient" type="text" value="My Dearest Friend" autocomplete="off">
+      </div>
+      <div class="text-editor-field">
+        <label for="editAddress">Alamat</label>
+        <input id="editAddress" type="text" value="Jakarta, Indonesia" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Swipe Hint -->
+    <div class="step-hint flex flex-col items-center text-center space-y-1">
+      <div class="flex items-center space-x-2 text-zinc-400">
+        <i data-lucide="arrow-left-right" class="w-4 h-4 text-zinc-300"></i>
+      </div>
+      <p class="helper-copy text-xs text-zinc-400">Geser kartu untuk melihat sisi belakang.</p>
+    </div>
+
+    <!-- Next Step Pill Button -->
+    <button onclick="goToStep(3)" class="primary-action w-full flex items-center justify-center gap-2 px-4">
+      Atur latar &amp; simpan <i data-lucide="arrow-right" class="w-4 h-4"></i>
+    </button>
+  </section>
+
+
+  <!-- ==================== STEP 3: BACKGROUND & DOWNLOAD PREVIEW ==================== -->
+  <section id="step3View" class="step-panel hidden flex-col items-center px-4 pb-6 z-10 transition-all duration-300">
+    <div class="step-heading text-center">
+      <h2 class="font-sans-ui text-sm font-medium text-zinc-200">Siap dibagikan</h2>
+      <p class="font-sans-ui text-xs text-zinc-400">Atur latar, lalu simpan kenanganmu.</p>
+    </div>
+    
+    <!-- 9:16 Instagram Story Preview Frame -->
+    <div id="storyViewport916" class="relative w-full max-w-[310px] aspect-[9/16] bg-zinc-950 overflow-hidden shadow-2xl flex flex-col items-center justify-center p-4 my-auto border border-zinc-800">
+      <!-- Background Image -->
+      <img id="storyBgPhotoImg" src="https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1080&q=80" alt="Background" class="absolute inset-0 w-full h-full object-cover" crossorigin="anonymous">
+      <div class="absolute inset-0 bg-black/15"></div>
+
+      <!-- Stacked Dual Cards -->
+      <div class="relative z-10 w-full space-y-3.5 flex flex-col items-center justify-center">
+        <div id="storyTopCardMirror" class="w-full aspect-[16/10] bg-zinc-900 shadow-2xl relative overflow-hidden"></div>
+        <div id="storyBottomCardMirror" class="w-full aspect-[16/10] bg-[#f7f2e8] text-[#2c241e] shadow-2xl relative overflow-hidden"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Actions Toolbar -->
+    <div class="w-full flex items-center justify-between space-x-2 pt-3">
+      <!-- Retake / Change Foto Button -->
+      <button onclick="promptPhotoChoice()" title="Ganti Foto Sampul" aria-label="Ganti foto sampul" class="toolbar-action w-12 h-12 rounded-2xl bg-[#262626] border border-zinc-700 hover:bg-zinc-700 text-white flex items-center justify-center shadow-lg transition">
+        <i data-lucide="camera" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Change Background Button -->
+      <label title="Ganti Background Wallpaper" class="toolbar-action w-12 h-12 rounded-2xl bg-[#262626] border border-zinc-700 hover:bg-zinc-700 text-white flex items-center justify-center shadow-lg transition cursor-pointer">
+        <i data-lucide="image" class="w-5 h-5"></i>
+        <input type="file" accept="image/*" class="hidden" onchange="uploadCustomBg(event)">
+      </label>
+
+      <!-- Download Button -->
+      <button onclick="downloadStoryPNG()" class="primary-action flex-1 h-12 rounded-2xl text-xs transition flex items-center justify-center space-x-2 shadow-xl active:scale-98">
+        <i data-lucide="download" class="w-4 h-4"></i><span>Simpan PNG</span>
+      </button>
+    </div>
+
+  </section>
+
+
+  <!-- MODAL CHOICE: CAMERA OR GALLERY -->
+  <div id="photoChoiceModal" class="modal-backdrop fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="modal-card bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
+      <h3 class="font-sans-ui text-base font-semibold text-white">Pilih Sumber Foto</h3>
+      
+      <div class="space-y-2">
+        <button onclick="startCameraStream()" class="primary-action w-full py-3 rounded-xl text-xs flex items-center justify-center space-x-2">
+          <i data-lucide="aperture" class="w-4 h-4"></i>
+          <span>Ambil Foto via Kamera</span>
+        </button>
+
+        <label class="modal-secondary w-full border border-zinc-700 text-white font-medium py-3 rounded-xl text-xs flex items-center justify-center space-x-2 cursor-pointer">
+          <i data-lucide="upload" class="w-4 h-4 text-zinc-400"></i>
+          <span>Upload dari Galeri</span>
+          <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+        </label>
+      </div>
+
+      <button onclick="closeModal('photoChoiceModal')" class="text-xs text-zinc-500 hover:text-zinc-300">
+        Batal
+      </button>
+    </div>
+  </div>
+
+
+  <!-- LIVE WEBCAM MODAL -->
+  <div id="cameraCaptureModal" class="modal-backdrop fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="modal-card bg-zinc-900 border border-zinc-800 rounded-3xl p-4 max-w-sm w-full space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between pb-1 border-b border-zinc-800">
+        <span class="text-xs font-medium text-white">Kamera Live</span>
+        <div class="flex items-center space-x-2">
+          <button onclick="switchCameraFacing()" title="Switch Front/Rear" class="p-1.5 rounded-lg bg-zinc-800 text-white">
+            <i data-lucide="switch-camera" class="w-4 h-4"></i>
+          </button>
+          <button onclick="stopCameraStream()" class="text-zinc-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="relative aspect-[4/3] bg-black rounded-xl overflow-hidden">
+        <video id="webcamVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+        <canvas id="webcamCanvas" class="hidden"></canvas>
+      </div>
+
+      <button onclick="captureSnapshot()" class="w-full bg-white text-black font-semibold py-3 rounded-xl text-xs flex items-center justify-center space-x-2">
+        <i data-lucide="circle-dot" class="w-5 h-5"></i>
+        <span>Ambil Foto Sekarang</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let currentStep = 1;
+    let isFlipped = false;
+    let cameraStream = null;
+    let currentFacingMode = 'environment';
+    
+    // Swipe State
+    let currentAngleY = 0;
+    let isDraggingCard = false;
+    let startX = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initCardSwipePhysics();
+      syncTitleInputListeners();
+    });
+
+    // --- STEP NAVIGATION LOGIC ---
+    function goToStep(step) {
+      currentStep = step;
+      document.getElementById('step1View').classList.add('hidden');
+      document.getElementById('step2View').classList.add('hidden');
+      document.getElementById('step3View').classList.add('hidden');
+
+      document.getElementById('step1View').classList.remove('flex');
+      document.getElementById('step2View').classList.remove('flex');
+      document.getElementById('step3View').classList.remove('flex');
+
+      const target = document.getElementById(`step${step}View`);
+      target.classList.remove('hidden');
+      target.classList.add('flex');
+
+      document.querySelectorAll('[data-step-indicator]').forEach(indicator => {
+        const indicatorStep = Number(indicator.dataset.stepIndicator);
+        indicator.classList.toggle('is-active', indicatorStep === step);
+        indicator.classList.toggle('is-complete', indicatorStep < step);
+        if (indicatorStep === step) {
+          indicator.setAttribute('aria-current', 'step');
+        } else {
+          indicator.removeAttribute('aria-current');
+        }
+      });
+
+      if (step === 3) {
+        syncStoryMirrors();
+      }
+    }
+
+    // --- TITLE SYNC BETWEEN STEP 1 & STEP 2 ---
+    function syncTitleInputListeners() {
+      const editableFields = [
+        { input: 'editFrontTitle', target: 'frontTitleText' },
+        { input: 'editFrontSubtitle', target: 'frontSubtitleText' },
+        { input: 'editBackMessage', target: 'backMsgText' },
+        { input: 'editRecipient', target: 'backToText' },
+        { input: 'editAddress', target: 'backAddrText' }
+      ];
+
+      editableFields.forEach(({ input, target }) => {
+        const field = document.getElementById(input);
+        const text = document.getElementById(target);
+        field.value = text.textContent.trim();
+
+        field.addEventListener('input', () => {
+          text.textContent = field.value;
+          if (target === 'frontTitleText') {
+            document.getElementById('step1TitlePreview').textContent = field.value;
+          } else if (target === 'frontSubtitleText') {
+            document.getElementById('step1SubtitlePreview').textContent = field.value;
+          }
+        });
+
+        text.addEventListener('input', () => {
+          field.value = text.textContent;
+        });
+      });
+    }
+
+    // --- 3D CARD SWIPE LOGIC ---
+    function initCardSwipePhysics() {
+      const container = document.getElementById('interactiveCardContainer');
+      const flipper = document.getElementById('card3DFlipper');
+
+      const onPointerDown = (e) => {
+        if (e.target.isContentEditable || e.target.closest('[contenteditable="true"]')) return;
+        isDraggingCard = true;
+        startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        flipper.style.transition = 'none';
+      };
+
+      const onPointerMove = (e) => {
+        if (!isDraggingCard) return;
+        const currentX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+        const deltaX = currentX - startX;
+        const tempAngle = currentAngleY + (deltaX * 0.75);
+        flipper.style.transform = `rotateY(${tempAngle}deg)`;
+      };
+
+      const onPointerUp = (e) => {
+        if (!isDraggingCard) return;
+        isDraggingCard = false;
+        
+        const currentX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || startX;
+        const deltaX = currentX - startX;
+        
+        if (Math.abs(deltaX) > 40) {
+          currentAngleY = isFlipped ? 0 : 180;
+          isFlipped = (currentAngleY % 360 !== 0);
+        } else {
+          currentAngleY = isFlipped ? 180 : 0;
+        }
+
+        flipper.classList.toggle('card-flipped', isFlipped);
+        flipper.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        flipper.style.transform = `rotateY(${currentAngleY}deg)`;
+      };
+
+      container.addEventListener('mousedown', onPointerDown);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+
+      container.addEventListener('touchstart', onPointerDown, { passive: true });
+      window.addEventListener('touchmove', onPointerMove, { passive: true });
+      window.addEventListener('touchend', onPointerUp);
+    }
+
+    // --- PHOTO SOURCES & CAMERA ---
+    function promptPhotoChoice() {
+      document.getElementById('photoChoiceModal').classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function applyNewPhoto(src) {
+      document.getElementById('step1PhotoImg').src = src;
+      document.getElementById('cardPhotoImg').src = src;
+      document.getElementById('stampMiniPhoto').src = src;
+      closeModal('photoChoiceModal');
+      
+      // If currently on Step 1, auto advance to Step 2
+      if (currentStep === 1) {
+        goToStep(2);
+      }
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => applyNewPhoto(event.target.result);
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function startCameraStream() {
+      closeModal('photoChoiceModal');
+      const modal = document.getElementById('cameraCaptureModal');
+      const video = document.getElementById('webcamVideo');
+      modal.classList.remove('hidden');
+
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: currentFacingMode } }
+        });
+        video.srcObject = cameraStream;
+      } catch (err) {
+        alert('Kamera tidak dapat diakses.');
+        stopCameraStream();
+      }
+    }
+
+    function switchCameraFacing() {
+      currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+      startCameraStream();
+    }
+
+    function stopCameraStream() {
+      closeModal('cameraCaptureModal');
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+    }
+
+    function captureSnapshot() {
+      const video = document.getElementById('webcamVideo');
+      const canvas = document.getElementById('webcamCanvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      applyNewPhoto(canvas.toDataURL('image/jpeg'));
+      stopCameraStream();
+    }
+
+    function uploadCustomBg(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          document.getElementById('storyBgPhotoImg').src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // --- SYNC STORY MIRRORS (9:16 PREVIEW) ---
+    function syncStoryMirrors() {
+      const frontCard = document.getElementById('editableFrontCard');
+      const backCard = document.getElementById('editableBackCard');
+
+      const frontClone = frontCard.cloneNode(true);
+      const backClone = backCard.cloneNode(true);
+
+      // Un-mirror back card text for story export
+      backClone.classList.remove('rotate-y-180');
+      backClone.style.transform = 'none';
+
+      document.getElementById('storyTopCardMirror').innerHTML = '';
+      document.getElementById('storyTopCardMirror').appendChild(frontClone);
+
+      document.getElementById('storyBottomCardMirror').innerHTML = '';
+      document.getElementById('storyBottomCardMirror').appendChild(backClone);
+
+      lucide.createIcons();
+    }
+
+    // --- DOWNLOAD PNG STORY ---
+    function downloadStoryPNG() {
+      syncStoryMirrors();
+      const storyViewport = document.getElementById('storyViewport916');
+
+      html2canvas(storyViewport, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Postcard-Story-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
